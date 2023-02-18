@@ -1,43 +1,30 @@
-#include<node/node.h> // NOLINT
+#include<node/node_api.h>
 
 namespace shallowBlue {
 
-using v8::Exception;
-using v8::FunctionCallbackInfo;
-using v8::Isolate;
-using v8::Local;
-using v8::Number;
-using v8::Object;
-using v8::String;
-using v8::Value;
+napi_value Move(napi_env env, napi_callback_info args) {
+    napi_status status;
+    napi_value move;
 
-void Add(const FunctionCallbackInfo<Value>& args) {
-    Isolate* isolate = args.GetIsolate();
+    status = napi_create_string_utf8(env, "d5", NAPI_AUTO_LENGTH, &move);
+    if(status != napi_ok) return nullptr;
 
-    // Check arg length
-    if(args.Length() < 2) {
-        // Throw js expection
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong Number of Arguments").ToLocalChecked()));
-        return;
-    }
-
-    // Check arg types
-    if(!args[0]->IsNumber() || !args[1]->IsNumber()) {
-        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong Type Arguments").ToLocalChecked()));
-        return;
-    }
-
-    // Perform Operation
-    double value = args[0].As<Number>()->Value() + args[1].As<Number>()->Value();
-    Local<Number> num = Number::New(isolate, value);
-
-    args.GetReturnValue().Set(num);
+    return move;
 }
 
-void Initialize(Local<Object> exports) {
-  NODE_SET_METHOD(exports, "add", Add);
+napi_value init(napi_env env, napi_value exports) {
+    napi_status status;
+    napi_value fn;
+
+    status = napi_create_function(env, nullptr, 0, Move, nullptr, &fn);
+    if(status != napi_ok) return nullptr;
+
+    status = napi_set_named_property(env, exports, "move", fn);
+
+    if(status != napi_ok) return nullptr;
+    return exports;
 }
 
-NODE_MODULE(NODE_GYP_MODULE_NAME, Initialize)
+NAPI_MODULE(NODE_GYP_MODULE_NAME, init);
 
 } // namespace shallowBlue

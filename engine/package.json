@@ -4,7 +4,9 @@
   "description": "Shallow Blue JS add-on",
   "main": "lib.cpp",
   "scripts": {
-    "build": "cmake-js -D -O ./bin/debug/"
+    "build": "cmake-js -D && cp ./build/Debug/shallow_blue.node ./bin/debug/",
+    "build-release": "cmake-js && cp ./build/Release/shallow_blue.node ./bin/release/",
+    "clean": "rm -rdf ./build/* && rm -rdf ./bin/* && mkdir debug && mkdir release"
   },
   "repository": {
     "type": "git",
