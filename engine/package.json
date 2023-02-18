@@ -3,9 +3,6 @@
   "version": "1.0.0",
   "description": "Shallow Blue JS add-on",
   "main": "lib.cpp",
-  "directories": {
-    "test": "test"
-  },
   "scripts": {
     "build": "cmake-js -D -O ./bin/debug/"
   },
@@ -13,7 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/jonathanforhan/Shallow-Blue.git"
   },
-  "author": "Jon",
+  "author": "jonathanforhan",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/jonathanforhan/Shallow-Blue/issues"
