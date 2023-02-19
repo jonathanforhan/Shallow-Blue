@@ -15,18 +15,26 @@ app.get('/:id', (req, res) => {
   let fen = req.params.id.replaceAll('@', '/')
   console.log(fen)
 
-  let engine = new Engine();
-  let game = {};
+  let game = new Chess();
 
   try {
     game = new Chess(fen);
-  } catch {
-    res.json({ error: "Invalid Fen" }).status(401)
+  } catch(e) {
+    res.json({ error: `${e}` }).status(401)
     return;
   }
 
-  let m = engine.move(game.board());
-  res.json(m)
+  let engine = new Engine();
+
+  const moves = game.moves();
+  if(game.isGameOver() || game.isDraw() || moves.length === 0) {
+    res.json({ error: 'Game Over' })
+  }
+  const i = Math.floor(Math.random() * moves.length);
+
+  let m = engine.move(fen);
+
+  res.json(moves[i])
 })
 
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));

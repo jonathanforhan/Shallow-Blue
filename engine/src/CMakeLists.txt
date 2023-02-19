@@ -1,6 +1,9 @@
-add_library(${CMAKE_PROJECT_NAME} SHARED lib.cpp)
+add_subdirectory(engine)
+
+add_library(${CMAKE_PROJECT_NAME} SHARED lib.cpp ${CMAKE_JS_SRC})
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
-# target_link_libraries(${CMAKE_PROJECT_NAME} ${CMAKE_JS_INCLUDE})
+target_link_libraries(${CMAKE_PROJECT_NAME} ${CMAKE_JS_LIB} Engine)
+target_include_directories(${PROJECT_NAME} PRIVATE ${NODE_ADDON_API_DIR} "./engine/")
 
 if(MSVC AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)
   # Generate node.lib

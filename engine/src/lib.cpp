@@ -1,30 +1,33 @@
-#include<node/node_api.h>
+#include<napi.h>
+#include"engine/engine.hpp"
+#include"engine/game.hpp"
 
-namespace shallowBlue {
+namespace sb {
 
-napi_value Move(napi_env env, napi_callback_info args) {
-    napi_status status;
-    napi_value move;
+Napi::Value Move(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
 
-    status = napi_create_string_utf8(env, "d5", NAPI_AUTO_LENGTH, &move);
-    if(status != napi_ok) return nullptr;
+  if(info.Length() != 1) {
+      Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+      return env.Null();
+  }
 
-    return move;
+  if(!info[0].IsString()) {
+      Napi::TypeError::New(env, "Arguement must be string").ThrowAsJavaScriptException();
+      return env.Null();
+  }
+
+  std::string fen = info[0].As<Napi::String>().ToString();
+  Game game = Game(fen);
+
+  return Napi::String::New(env, fen);
 }
 
-napi_value init(napi_env env, napi_value exports) {
-    napi_status status;
-    napi_value fn;
-
-    status = napi_create_function(env, nullptr, 0, Move, nullptr, &fn);
-    if(status != napi_ok) return nullptr;
-
-    status = napi_set_named_property(env, exports, "move", fn);
-
-    if(status != napi_ok) return nullptr;
-    return exports;
+Napi::Object Init(Napi::Env env, Napi::Object exports) {
+  exports.Set(Napi::String::New(env, "move"), Napi::Function::New(env, Move));
+  return exports;
 }
 
-NAPI_MODULE(NODE_GYP_MODULE_NAME, init);
+NODE_API_MODULE(move, Init);
 
-} // namespace shallowBlue
+} // namespace sb

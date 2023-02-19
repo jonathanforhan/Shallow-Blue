@@ -13,26 +13,37 @@ function App() {
   const [currentTimeout, setCurrentTimeout] = useState();
   const chessboardRef = useRef(null);
 
-  const [position, setPosition] = useState();
-
+  /**
+   * @param {function} modify - modify function for the game Object
+   * @returns {Object} update - updated game Object
+   */
   function safeGameMutate(modify) {
     setGame((g) => {
-      const update = Object.assign(Object.create(Object.getPrototypeOf(g)), g);
+      const update = new Chess(g.fen());
       modify(update);
       return update;
     });
   }
 
-  async function oppTurn() {
-    console.log(game.fen())
-    await fetchMove(game.fen()).then((move) => {
+  /**
+   * @param {string} fen - fen notation of current position
+   */
+  function oppTurn(fen) {
+    fetchMove(fen).then((move) => {
+      if(move.error) {
+        alert('Game Over')
+        return
+      }
       safeGameMutate(g => g.move(move))
-    });
+    })
   }
 
+  /**
+   * @param {string, string} src, dst - src square and destination dquare
+   * @returns {boolean} - validity of move
+   */
   function onDrop(src, dst) {
-    // gameCopy is deep copy that maintains prototype
-    let gameCopy = Object.assign(Object.create(Object.getPrototypeOf(game)), game);
+    let gameCopy = new Chess(game.fen());
     try {
       gameCopy.move({
         from: src,
@@ -42,8 +53,10 @@ function App() {
     } catch {
       return false;
     }
-    setGame(gameCopy)
-    const newTimeout = setTimeout(oppTurn, 400);
+    console.log(gameCopy.fen())
+
+    setGame(gameCopy);
+    const newTimeout = setTimeout(oppTurn(gameCopy.fen()), 300);
     setCurrentTimeout(newTimeout);
 
     return true;
@@ -55,7 +68,6 @@ function App() {
         <Chessboard
           id='chessBoard'
           position={game.fen()}
-          getPositionObject={setPosition}
           onPieceDrop={onDrop}
           arePremovesAllowed={true}
           boardWidth={_window.height - 160}

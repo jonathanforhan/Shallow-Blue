@@ -1,11 +1,17 @@
 import { useState, useEffect } from 'react';
 
-const getWindowDimensions = () => {
+  /**
+   * @returns {number, number} - width and height of browser window
+   */
+function getWindowDimensions() {
   const { innerWidth: width, innerHeight: height } = window;
   return { width, height };
 }
 
-const useWindowDimensions = () => {
+  /**
+   * @returns {Object} windowDimensions - Object windowDimensions { width, height }
+   */
+function useWindowDimensions() {
   const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
 
   useEffect(() => {

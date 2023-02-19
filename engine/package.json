@@ -2,11 +2,11 @@
   "name": "shallow_blue",
   "version": "1.0.0",
   "description": "Shallow Blue JS add-on",
-  "main": "lib.cpp",
+  "main": "lib.cc",
   "scripts": {
     "build": "cmake-js -D && cp ./build/Debug/shallow_blue.node ./bin/debug/",
     "build-release": "cmake-js && cp ./build/Release/shallow_blue.node ./bin/release/",
-    "clean": "rm -rdf ./build/* && rm -rdf ./bin/* && mkdir debug && mkdir release"
+    "clean": "rm -rdf ./build/* && rm -rdf ./bin/* && mkdir ./bin/debug && mkdir ./bin/release"
   },
   "repository": {
     "type": "git",
@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/jonathanforhan/Shallow-Blue/issues"
   },
-  "homepage": "https://github.com/jonathanforhan/Shallow-Blue#readme"
+  "homepage": "https://github.com/jonathanforhan/Shallow-Blue#readme",
+  "dependencies": {
+    "node-addon-api": "^6.0.0"
+  }
 }
