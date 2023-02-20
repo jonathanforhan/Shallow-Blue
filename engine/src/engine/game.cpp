@@ -1,122 +1,140 @@
 #include"game.hpp"
-#include<sstream>
-#include<vector>
-#include<iostream>
+#include"common.hpp"
+#include"fen.hpp"
 #include<bitset>
+#include<cstdint>
+#include<stdexcept>
+#include<iostream>
+#include<utility>
 
 namespace sb {
 
-Game::Game(const std::string& p_fen) {
+Game::Game(const std::string p_fen) {
     decode_fen(p_fen);
 }
 
 // Setters //
 
-void Game::set_pieces(uint32_t p_pieces[8]) {
-    for(size_t i = 0; i < 64; ++i)
-        this->m_pieces[i] = p_pieces[i];
+void Game::move(const square& p_src, const square& p_dst) {
+    // non-capture move
+    Piece piece = get_square(p_src);
+    
+    uint32_t* src_row = &m_pieces[p_src.y];
+    uint32_t* dst_row = &m_pieces[p_dst.y];
+    *src_row &= ~(0xf << p_src.x * 4); // clear bits intended to move
+    *dst_row |= piece << (p_dst.x * 4);
 }
-void Game::set_turn(char p_turn) { this->m_turn = p_turn; }
-void Game::set_castle(uint8_t p_castle) { this->m_castle = p_castle; }
-void Game::set_en_passant(int8_t p_en_passant) { this->m_en_passant = p_en_passant; }
-void Game::set_eval(uint8_t p_eval) { this->m_eval = p_eval; }
+
+void Game::promote(const square& p_sqr, Piece p_piece) {
+    uint32_t* sqr_row = &m_pieces[p_sqr.y];
+    *sqr_row &= ~(0xf << p_sqr.x * 4);    // clear bits
+    *sqr_row |= p_piece << (p_sqr.x * 4); // promote
+}
+
+void Game::capture(const square& p_src, const square& p_dst) {
+    Piece piece = get_square(p_src);
+    
+    uint32_t* src_row = &m_pieces[p_src.y];
+    uint32_t* dst_row = &m_pieces[p_dst.y];
+    *src_row &= ~(0xf << p_src.x * 4); // clear bits intended to move
+    *dst_row &= ~(0xf << p_dst.x * 4); // clear bits of captured piece
+    *dst_row |= piece << (p_dst.x * 4);
+}
+
+void Game::castle(Castle p_castle) {
+    remove_castle(0xf); // clear castle rights
+    switch(p_castle) {
+        case Castle::K:
+            move({ 4, 0 }, { 6, 0 });
+            move({ 7, 0 }, { 5, 0 });
+            break;
+        case Castle::k:
+            move({ 4, 7 }, { 6, 7 });
+            move({ 7, 7 }, { 5, 7 });
+            break;
+        case Castle::Q:
+            move({ 4, 0 }, { 2, 0 });
+            move({ 0, 0 }, { 3, 0 });
+            break;
+        case Castle::q:
+            move({ 4, 7 }, { 2, 7 });
+            move({ 0, 7 }, { 3, 7 });
+            break;
+        default:
+            throw "Never reach default";
+    };
+}
 
 // Getters //
 
-const uint32_t* Game::get_pieces(){ return m_pieces; }
-const char Game::get_turn(){ return m_turn; }
-const uint8_t Game::get_castle(){ return m_castle; }
-const int8_t Game::get_en_passant(){ return m_en_passant; }
-const uint8_t Game::get_eval(){ return m_eval; }
+Piece Game::get_square(const square& p_sqr) {
+    size_t x = p_sqr.x;
+    size_t y = p_sqr.y;
+
+    #ifndef NDEBUG
+    if(x > 7 || y > 7) throw std::invalid_argument("indexed 0-7");
+    #endif // NDEBUG
+    
+    uint32_t row = m_pieces[y];
+    x = x << 2; // x *= 4;
+    uint8_t result = 0 | (row >> x) & 0xf; // transfer piece to result
+    return static_cast<Piece>(result);
+}
 
 // Private Member Functions //
 
 void Game::decode_fen(const std::string& p_fen) noexcept {
-    // Parse Fen components then parse positonal string
-    std::string buf;
-    std::stringstream ss(p_fen);
-    std::string position;
+    Fen::decode(this, p_fen); // Friend function mutates member vars
 
-    ss >> buf; position = buf; // save position
-    ss >> buf; m_turn = buf.c_str()[0];
-    ss >> buf;
-    for(const auto& n : buf) {
-        switch(n) {
-            case 'K':
-                m_castle |= Castle::K;
-                break;
-            case 'k':
-                m_castle |= Castle::k;
-                break;
-            case 'Q':
-                m_castle |= Castle::Q;
-                break;
-            case 'q':
-                m_castle |= Castle::q;
-                break;
-            default:
-                m_castle = 0;
-                break;
-        }
-    }
-    ss >> buf; m_en_passant = buf[0] == '-' ? -1 : (buf[0] - 97) + ((buf[1] - 1) * 8);
-
-    // Positional string parse
-    ss = std::stringstream(position);
-    size_t i = 0;
-    while(std::getline(ss, buf, '/')) {
-        int gap = 0;
-        for(size_t j = 0; j < buf.length(); j++) {
-            uint32_t color;
-            if(std::isdigit(buf[j])) {
-                gap += buf[j] - '1';
-                continue;
-            } else {
-                color = std::isupper(buf[j]) ? 1 : 0; // w-1 b-0
-                size_t offset = (j + gap) * 4;
-                color = color << offset << 3;
-                m_pieces[i] |= color;
-            }
-
-            uint32_t piece;
-            switch(buf[j]) {
-                case 'P':
-                case 'p':
-                    piece = Piece::Pawn;
-                    break;
-                case 'B':
-                case 'b':
-                    piece = Piece::Bishop;
-                    break;
-                case 'N':
-                case 'n':
-                    piece = Piece::Knight;
-                    break;
-                case 'R':
-                case 'r':
-                    piece = Piece::Rook;
-                    break;
-                case 'Q':
-                case 'q':
-                    piece = Piece::Queen;
-                    break;
-                case 'K':
-                case 'k':
-                    piece = Piece::King;
-                    break;
-                default:
-                    piece = Piece::None;
-            }
-
-            size_t offset = (j + gap) * 4;
-            piece = piece << offset;
-            m_pieces[i] |= piece;
-        }
-        ++i;
-    }
-    for(auto& n : m_pieces) {
-        std::cout << std::bitset<32>(n) << '\n';
-    }
+    #ifndef NDEBUG
+    print_debug();
+    #endif // NDEBUG
 }
+
+// Public Member Functions //
+
+MoveInfo Game::check_move(const square& p_src, const square& p_dst) {
+    Piece dst_piece = get_square(p_dst);
+    if(dst_piece == Piece::None)
+        return MoveInfo::FreeSquare;
+
+    Piece src_piece = get_square(p_src);
+    uint8_t src_color = (src_piece >> 3) & 1;
+    uint8_t dst_color = (dst_piece >> 3) & 1;
+
+    if(src_color == dst_color)
+        return MoveInfo::OccupiedSquare;
+    else if(dst_piece != Piece::WKing && dst_piece != Piece::BKing)
+        return MoveInfo::Capture;
+    else
+        return MoveInfo::Check;
+}
+
+// Debug Functions //
+
+#ifndef NDEBUG
+void Game::print_debug() {
+    for(int i = 7; i >= 0; --i) { // signed for decriments
+        for(size_t j = 0; j < 8; j++) {
+            Piece p = get_square(square(j, i));
+            if(p == Piece::WPawn) std::cout << "P ";
+            else if(p == Piece::BPawn) std::cout << "p ";
+            else if(p == Piece::WBishop) std::cout << "B ";
+            else if(p == Piece::BBishop) std::cout << "b ";
+            else if(p == Piece::WKnight) std::cout << "N ";
+            else if(p == Piece::BKnight) std::cout << "n ";
+            else if(p == Piece::WRook) std::cout << "R ";
+            else if(p == Piece::BRook) std::cout << "r ";
+            else if(p == Piece::WQueen) std::cout << "Q ";
+            else if(p == Piece::BQueen) std::cout << "q ";
+            else if(p == Piece::WKing) std::cout << "K ";
+            else if(p == Piece::BKing) std::cout << "k ";
+            else std::cout << ". ";
+        }
+        std::cout << '\n';
+    }
+    std::cout << "\n\n";
+}
+#endif // NDEBUG
 
 } // namespace sb
