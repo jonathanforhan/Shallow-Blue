@@ -5,6 +5,7 @@ namespace sb {
 
 constexpr uint8_t MIN = 0;
 constexpr uint8_t MAX = 255;
+constexpr uint8_t DEPTH = 3;
 
 enum PieceNoColor {
     Pawn    = 0b001,

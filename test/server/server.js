@@ -32,9 +32,16 @@ app.get('/:id', (req, res) => {
   }
   const i = Math.floor(Math.random() * moves.length);
 
-  let m = engine.move(fen);
+  let m = engine.move(fen).split("-");
+  try {
+    game.move({ to: m[0], from:m[1]  });
+  } catch(e) {
+    console.log(e);
+    res.json(moves[i]);
+    return;
+  }
+  res.json({ to: m[0], from:m[1] });
 
-  res.json(moves[i])
 })
 
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));

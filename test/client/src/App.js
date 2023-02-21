@@ -56,7 +56,7 @@ function App() {
     console.log(gameCopy.fen())
 
     setGame(gameCopy);
-    const newTimeout = setTimeout(oppTurn(gameCopy.fen()), 300);
+    const newTimeout = setTimeout(oppTurn(gameCopy.fen()), 0);
     setCurrentTimeout(newTimeout);
 
     return true;

@@ -104,10 +104,8 @@ MoveInfo Game::check_move(const square& p_src, const square& p_dst) {
 
     if(src_color == dst_color)
         return MoveInfo::OccupiedSquare;
-    else if(dst_piece != Piece::WKing && dst_piece != Piece::BKing)
-        return MoveInfo::Capture;
     else
-        return MoveInfo::Check;
+        return MoveInfo::Capture;
 }
 
 // Debug Functions //

@@ -3,7 +3,7 @@
 #include<cstdint>
 #include<string>
 
-/* Uses bit magic to represent the chess board
+/* Uses bits to represent the chess board
  * each row is a uint32_t that contains [ 1 color bit, 3 id bits ] * 8
  * for each square
  * this cuts the space in half from a char array
@@ -35,9 +35,9 @@ public:
     // Getters //
     Piece get_square(const square& p_sqr);
 
-    const char get_turn() { return this->m_turn; }
-    const uint8_t get_eval() { return this->m_eval; }
-    const uint8_t get_castle() { return this->m_castle; }
+    char get_turn() { return this->m_turn; }
+    uint8_t get_eval() { return this->m_eval; }
+    uint8_t get_castle() { return this->m_castle; }
 
     // Public Functions //
     MoveInfo check_move(const square& p_src, const square& p_dst);

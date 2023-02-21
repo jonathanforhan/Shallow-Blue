@@ -18,9 +18,11 @@ Napi::Value Move(const Napi::CallbackInfo& info) {
   }
 
   std::string fen = info[0].As<Napi::String>().ToString();
-  Game game = Game(fen);
+  Engine engine = Engine(fen);
+  std::string m = engine.get_move();
+  Napi::String s = Napi::String::New(env, m);
 
-  return Napi::String::New(env, fen);
+  return s;
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
